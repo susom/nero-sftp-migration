@@ -34,7 +34,7 @@ from paramiko.py3compat import input
 # Get the credentials - expecting username, password, and hostname
 from creds import username, password, hostname, \
     email_token, email_endpoint, email_from, \
-    default_dir, source_dir, prefix_list
+    default_dir, default_email, source_dir, prefix_list
 
 # setup logging
 paramiko.util.log_to_file("sftp.log")
@@ -111,13 +111,12 @@ try:
             #filter all Nonetypes from map
             filtered_path = [x for x in prefix_strings if x is not None]
 
-
             if filtered_path:
                 dest_path = filtered_path[0] + "/" + current_datetime
                 email = next((x['email'] for x in prefix_list if x['destination'] == filtered_path[0]), None)
             else:
                 dest_path = default_dir + "/" + current_datetime
-                email = None
+                email = default_email
             if not os.path.isdir(dest_path):
                 os.makedirs(dest_path)
             

@@ -1,7 +1,7 @@
 # nero-sftp-migration
 A utility on nero to migrate files from a remote sftp server to localhost
 
-This script will route files based on prefix to any supplied destination, creating a folder based on timestamp.
+This script will route files based on prefix to any supplied destination, creating a new folder based on timestamp with the matching files.
 
 This script on nero requires:
 
@@ -31,6 +31,10 @@ default_dir="shared"
 # Directory where files are going to be pulled from
 source_dir="files/api"
 
+# Default email that is used when no prefix matches are found
+default_email='abc@gmail.com'
+
+# Array that contains an Object entry for each prefix match case
 prefix_list = [
     {
         "prefix": "kuth", #Route all files with this prefix to <destination>
@@ -40,7 +44,7 @@ prefix_list = [
     {
         "prefix": "rand",
         "destination": "randtab/var/shared/files",
-        "email": "rand@gmail.com"
+        "email": "" # Leave email empty to prevent sending a request per check
     },
     ...
 ]
@@ -48,4 +52,3 @@ prefix_list = [
 **Note: The prefix is case sensitive and should be separated from the filename by an underscore**
  - **E.g**: `kuth_apidoc.txt`
 
-Please leave email fields empty to prevent sending a request per check
