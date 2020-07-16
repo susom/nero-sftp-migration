@@ -32,7 +32,9 @@ import pytz
 from paramiko.py3compat import input
 
 # Get the credentials - expecting username, password, and hostname
-from creds import username, password, hostname, email_token, email_endpoint, email_to, email_from, dest_dir, source_dir
+from creds import username, password, hostname, \
+    email_token, email_endpoint, email_from, \
+    default_dir, source_dir, prefix_list
 
 # setup logging
 paramiko.util.log_to_file("sftp.log")
@@ -74,10 +76,10 @@ try:
     # List of files on server
     files = sftp.listdir(".")
     
+    
     # Log file to determine most recent check
     check_file_name = "last_check.txt"
     log_file_name = "sftp_checks.log"
-
 
     # Create current time in format yyyy-mm-dd_hh_mm
     # Server is currently returning UTC
@@ -88,33 +90,51 @@ try:
     with open(check_file_name, "w+") as fp:
         fp.write(current_datetime+"\n")
 
-    # also save a copy to the destination directory
-    with open(dest_dir + "/" + check_file_name, "w+") as fp:
-        fp.write(current_datetime+"\n")
+    #update check_file with newest date in each destination dir
+    folders = list(map(lambda x: x['destination'], prefix_list)) + [default_dir]
+    
+    for folder in folders:
+        if not os.path.isdir(folder):
+            os.makedirs(folder)
+        with open(folder + "/" + check_file_name, "w+") as fp:
+            fp.write(current_datetime+"\n")
 
     if len(files) != 0:
-        # There are new files, Create directory to store data
-        dest_path = dest_dir + "/" + current_datetime
-        if not os.path.isdir(dest_path):
-            os.mkdir(dest_path)
-
         # iterate through files, add and remove
         for filename in files:
+            #check if match in prefix list
+            tokenize = filename.split("_")[0]
+            
+            #get destination path if token matches one of the prefixes
+            prefix_strings = list(map(lambda x: x['destination'] if tokenize == x['prefix'] else None, prefix_list))
+            
+            #filter all Nonetypes from map
+            filtered_path = [x for x in prefix_strings if x is not None]
+
+
+            if filtered_path:
+                dest_path = filtered_path[0] + "/" + current_datetime
+                email = next((x['email'] for x in prefix_list if x['destination'] == filtered_path[0]), None)
+            else:
+                dest_path = default_dir + "/" + current_datetime
+                email = None
+            if not os.path.isdir(dest_path):
+                os.makedirs(dest_path)
+            
             sftp.get("./" + filename, dest_path + "/" + filename)
             sftp.remove("./"+filename)
 
-        #shutil.copytree("./" + current_datetime, dest_dir + "/" + current_datetime)
-
-        # Notify someone that new data exists
-        r = requests.post(email_endpoint, data={
-            "email_token": email_token,
-            "to": email_to,
-            "from_name": "Nero Batch Script",
-            "from_email": email_from,
-            "subject": "New Files Available: " + current_datetime,
-            "body": "New files were just obtained for your project.  They can be found at " +
-                    "https://nero.compute.stanford.edu in the directory:\n\n\t" + dest_path
-        })
+            # Notify someone that new data exists
+            if(email):
+                r = requests.post(email_endpoint, data={
+                    "email_token": email_token,
+                    "to": email,
+                    "from_name": "Nero Batch Script",
+                    "from_email": email_from,
+                    "subject": "New Files Available: " + current_datetime,
+                    "body": "New files were just obtained for your project.  They can be found at " +
+                            "https://nero.compute.stanford.edu in the directory:\n\n\t" + dest_path
+                })
 
     # also save a log
     with open("./" + log_file_name, "a+") as fp:
@@ -129,3 +149,5 @@ except Exception as e:
     except:
         pass
     sys.exit(1)
+
+    
