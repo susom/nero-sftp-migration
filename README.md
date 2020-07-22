@@ -31,7 +31,7 @@ default_dir="shared"
 # Directory where files are going to be pulled from
 source_dir="files/api"
 
-# Default email that is used when no prefix matches are found
+# Default email that is used when no prefix matches are found, and when script exception/failure is encountered
 default_email='abc@gmail.com'
 
 # Array that contains an Object entry for each prefix match case
