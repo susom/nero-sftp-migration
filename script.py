@@ -142,6 +142,14 @@ try:
     t.close()
 except Exception as e:
     print("*** Caught exception: %s: %s" % (e.__class__, e))
+    r = requests.post(email_endpoint, data={
+        "email_token": email_token,
+        "to": default_email,
+        "from_name": "Nero Batch Script",
+        "from_email": email_from,
+        "subject": "Error running sftp script: " + current_datetime,
+        "body": "Script failed with the following error: \n\t" + str(e) 
+    })
     traceback.print_exc()
     try:
         t.close()

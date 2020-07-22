@@ -1,2 +1,15 @@
 .DS_Store
 .idea*
+creds.py
+sftp
+andy123
+default
+kuth1253
+randtab
+shared
+last_check
+sftp*
+docker*
+*.pyc
+*.txt
+*.json
